@@ -49,6 +49,14 @@ app.get('/home',function(req,res){
         res.end('<a href="/">Login</a>');
     }
 });
+app.post('/home', function(req, res) {
+    console.log(req.body);
+    div.push({
+        title: req.body.title,
+        comment: req.body.comment
+    });
+    res.render('home',{email: sess.email, div: div});
+});
 
 app.get('/logout',function(req,res){
     req.session.destroy(function(err){
