@@ -52,7 +52,7 @@ app.post('/login',function(req,res){
             console.log(err);
         }else{
             if(doc===null){
-                console.log('ko tim thay gi');
+                console.log('dang nhap ko thanh cong');
                 res.end('error');
             }
             sess=req.session;
