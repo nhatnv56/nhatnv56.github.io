@@ -11,16 +11,17 @@
 <body>
 <div class="container">
     <div class="col-md-8 col-md-offset-2">
-        <h2>Login</h2>
+        <h2>Login or Create</h2>
             <div class="form-group">
-                <label for="inputEmail">Email address:</label>
+                <label for="email">Email address:</label>
                 <input type="email" class="form-control"  placeholder="Type your email" id="email" required>
             </div>
             <div class="form-group">
-                <label for="inputPassword">Password:</label>
+                <label for="password">Password:</label>
                 <input type="password" class="form-control"  placeholder="Type your password" id="password" required>
             </div>
-            <button type="submit" class="btn btn-default" id="submit">Submit</button>
+            <button type="submit" class="btn btn-default" id="submit">Login</button>
+            <button type="submit" class="btn btn-default" id="create">Create</button>
     </div>
 </div>
 <script>
@@ -42,11 +43,35 @@ $(document).ready(function(){
                 $.post("http://localhost:3000/login",{email:email,pass:pass},function(data){                
                     if(data==='done'){
                         window.location.href="/home";
+                    }else{
+                        window.location.href="/";
                     }
                 });
             }
         };
     });
+
+    $("#create").click(function() {
+        email=$("#email").val();
+        pass=$("#password").val();
+        atpos = email.indexOf("@");
+        dotpos = email.lastIndexOf(".");
+        if (email=="") {
+            $("#email").focus();
+        }else if(pass==""){
+            $("#password").focus();
+        }else{
+            if(atpos < 1 || ( dotpos - atpos < 2 )){//check email
+                $("#email").focus();
+            }else{
+                $.post("http://localhost:3000/create",{email:email,pass:pass},function(data){                
+                    if(data==='done'){
+                        window.location.href="/";
+                    }
+                });
+            }
+        };
+    })
 });
 //(function() {
 //    var email, pass;
