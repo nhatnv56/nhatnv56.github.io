@@ -19,9 +19,19 @@ mongoose.connect('mongodb://localhost/test');
 var UserSchema = new Schema({
     email:{type: String, required: true},
     password:{type: String, required: true},
+    comment: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comments' }]
 });
-var User = mongoose.model('users', UserSchema);
+var CommentSchema = new mongoose.Schema({
+  title: {type: String, required: true},
+  body: {type: String, required: true},
+  parent: { type: mongoose.Schema.Types.ObjectId, ref: 'users' }
+});
 
+
+var User = mongoose.model('users', UserSchema);
+//mongoose.model('Post', PostSchema);
+var Comment = mongoose.model('Comments', CommentSchema);
+//----------------------------------------
 var sess;
 
 //------------faker data-------
@@ -49,7 +59,7 @@ app.post('/login',function(req,res){
         password: req.body.pass
     },function(err, doc) {
         if(err){
-            console.log(err);
+            return handleError(err);
         }else{
             if(doc===null){
                 console.log('dang nhap ko thanh cong');
@@ -72,6 +82,31 @@ app.get('/home',function(req,res){
 });
 app.post('/home', function(req, res) {
     console.log(req.body);
+    console.log(req.session);
+    
+    User.findOne({
+        email: req.session.email
+    },function(err,user) {
+        Comment.create({
+            title: req.body.title,
+            body: req.body.comment,
+            parent: user._id
+        },function(err,comment) {
+            console.log(comment._id);
+            
+            User.findOneAndUpdate({
+                email: req.session.email
+            },{
+                $push: {'comment': comment._id}
+            },{
+                upsert:true
+            },function(err,odc) {
+                
+            })
+            console.log('exit');
+        });
+    })
+    
     div.push({
         title: req.body.title,
         comment: req.body.comment
@@ -99,6 +134,7 @@ app.post('/create',function (req,res) {
         if(err){
             console.log(err);
             res.end('error');
+//            return handleError(err);
         }else{
             console.log('added: \n' + doc);
             res.end('done');
