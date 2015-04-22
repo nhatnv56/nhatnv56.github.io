@@ -2,7 +2,6 @@ var express = require('express');
 var session = require('express-session');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
-var faker = require('faker');
 var app = express();
 var Schema = mongoose.Schema;
 
@@ -29,20 +28,9 @@ var CommentSchema = new mongoose.Schema({
 
 
 var User = mongoose.model('users', UserSchema);
-//mongoose.model('Post', PostSchema);
 var Comment = mongoose.model('Comments', CommentSchema);
-//----------------------------------------
-var sess;
 
-//------------faker data-------
-var div = [];
-for(var i = 12; i>0; i--){
-    div.push({
-        comment: faker.lorem.paragraphs(),
-        title: faker.lorem.sentence()
-    });
-}
-//------------faker data-------
+var sess;
 
 app.get('/',function(req,res){
     sess=req.session;
@@ -75,7 +63,11 @@ app.post('/login',function(req,res){
 app.get('/home',function(req,res){
     sess=req.session;
     if(sess.email){
-        res.render('home',{email: sess.email, div: div});
+        User.findOne({email: req.session.email}).populate('comment').exec(function(err,doc) {
+            if(err) console.error(err)
+            else
+                res.render('home',{email: sess.email, div: doc.comment});
+        });
     }else{
         res.redirect('/');
     }
@@ -92,26 +84,26 @@ app.post('/home', function(req, res) {
             body: req.body.comment,
             parent: user._id
         },function(err,comment) {
-            console.log(comment._id);
-            
-            User.findOneAndUpdate({
-                email: req.session.email
-            },{
-                $push: {'comment': comment._id}
-            },{
-                upsert:true
-            },function(err,odc) {
-                
-            })
-            console.log('exit');
+            user.comment.push(comment._id);
+            user.save(function(err) {
+                if(err) console.error(err)
+                else{
+                    console.log('success');
+                }
+            });
+//            User.findOneAndUpdate({
+//                email: req.session.email
+//            },{
+//                $push: {'comment': comment._id}
+//            },{
+//                upsert:true
+//            },function(err,doc) {
+//                
+//            });
+//            console.log('exit');
         });
-    })
-    
-    div.push({
-        title: req.body.title,
-        comment: req.body.comment
     });
-    res.render('home',{email: sess.email, div: div});
+    res.redirect('/home');
 });
 
 app.get('/logout',function(req,res){
@@ -126,7 +118,6 @@ app.get('/logout',function(req,res){
 app.post('/create',function (req,res) {
     console.log(req.body.email);
     console.log(req.body.pass);
-    // res.send('done');
     User.create({
         email: req.body.email,
         password: req.body.pass
@@ -134,7 +125,6 @@ app.post('/create',function (req,res) {
         if(err){
             console.log(err);
             res.end('error');
-//            return handleError(err);
         }else{
             console.log('added: \n' + doc);
             res.end('done');
